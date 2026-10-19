@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#17130f">
+<title>가디우스 이터널 워 몬스터 도감</title>
+<meta name="description" content="몬스터·드롭·마법·사냥터 정보 / モンスター・ドロップ・魔法・狩場情報">
+<link rel="canonical" href="https://gd-fandev.github.io/gd-monster-index/">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="favicon-180.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="GODIUS Monster Index">
+<meta property="og:title" content="가디우스 몬스터 도감 / ガディウス モンスター図鑑">
+<meta property="og:description" content="몬스터·드롭·마법·사냥터 정보 / モンスター・ドロップ・魔法・狩場情報">
+<meta property="og:url" content="https://gd-fandev.github.io/gd-monster-index/">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:locale:alternate" content="ja_JP">
+<meta property="og:image" content="https://gd-fandev.github.io/gd-monster-index/social-preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:alt" content="가디우스 몬스터 도감 / ガディウス モンスター図鑑">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="가디우스 몬스터 도감 / ガディウス モンスター図鑑">
+<meta name="twitter:description" content="몬스터·드롭·마법·사냥터 정보 / モンスター・ドロップ・魔法・狩場情報">
+<meta name="twitter:image" content="https://gd-fandev.github.io/gd-monster-index/social-preview.png">
+<link rel="stylesheet" href="style.css">
+<script type="module" src="app.js"></script>
+</head>
+<body>
+<header><h1 data-i18n="title">가디우스 이터널 워 몬스터 도감</h1><details id="languageMenu"><summary aria-label="언어 / 言語"><img id="languageFlag" src="flags/kr.svg" alt=""><span id="languageCode">KR</span><span class="languageArrow" aria-hidden="true"></span></summary><div class="languageOptions"><button type="button" data-language="ko" aria-label="한국어"><img src="flags/kr.svg" alt="">KR</button><button type="button" data-language="ja" aria-label="日本語"><img src="flags/jp.svg" alt="">JP</button></div></details></header>
+<main>
+<nav aria-label="도감 메뉴"><button id="monstersTab" class="active" aria-pressed="true"><span data-i18n="monsters">몬스터 도감</span> <span id="total"></span></button><button id="regionsTab" aria-pressed="false" data-i18n="regions">사냥터 · 입장 레벨</button></nav>
+<section class="filters" aria-label="검색 및 필터">
+<label class="search"><span data-i18n="search">이름 검색</span><input id="search" type="search" autocomplete="off"></label>
+<label class="monsterFilter"><span data-i18n="habitats">등장 지역</span><select id="region"></select></label>
+<label class="monsterFilter"><span data-i18n="attack">공격 속성</span><select id="attack"></select></label>
+<label class="monsterFilter"><span data-i18n="weakness">약점</span><select id="weakness"></select></label>
+<label class="monsterFilter"><span data-i18n="drops">드롭 아이템</span><select id="drop"></select></label>
+<button id="reset" class="reset" data-i18n="reset">초기화</button>
+</section>
+<div class="levelbar"><div><label for="level" data-i18n="myLevel">내 레벨</label><input id="level" type="number" min="1" step="1" placeholder="Lv"><span data-i18n="levelHint">레벨 조건만 비교합니다.</span><span id="levelError" role="status" hidden></span></div><label class="check"><input id="eligible" type="checkbox" disabled><span data-i18n="eligible">입장 조건 충족만</span></label></div>
+<section id="regionSummary" class="regionSummary" hidden></section>
+<div class="resultsbar"><h2 id="resultTitle"></h2><label><span data-i18n="sort">정렬</span><select id="sort"></select></label></div>
+<div id="results" class="cards" aria-live="polite"></div>
+<footer><span data-i18n="rights">본 사이트는 비공식 자료이며, 모든 자료의 권리는 (주)플레인월드에 있습니다.</span><span>© PlayinWorld. All rights reserved.</span></footer>
+</main>
+<dialog id="detail" aria-labelledby="detailTitle"><div class="dialogTop"><button id="back" hidden></button><button id="close" aria-label="닫기">✕</button></div><div id="detailBody"></div></dialog>
+</body></html>
