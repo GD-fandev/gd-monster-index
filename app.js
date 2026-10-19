@@ -1,5 +1,5 @@
-import {normalize, localizedName, admission, selectMonsters, minimumHabitat, detectLanguage, compareRegions} from './model.mjs';
-import {messages} from './i18n.mjs';
+const assetVersion=new URL(import.meta.url).searchParams.get('v')||'current';
+const [{normalize, localizedName, admission, selectMonsters, minimumHabitat, detectLanguage, compareRegions},{messages}]=await Promise.all([import(`./model.mjs?v=${assetVersion}`),import(`./i18n.mjs?v=${assetVersion}`)]);
 const $ = id => document.getElementById(id);
 const esc = text => String(text ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const colors={ice:'#67c7ff',fire:'#ff8070',divine:'#f2c94c',neutral:'#f2f2f2',poison:'#c292ed',disease:'#89ce81',petrify:'#b1b8bf'};
@@ -107,7 +107,7 @@ $('close').onclick=()=>$('detail').close();$('detail').addEventListener('close',
 $('detail').addEventListener('click',e=>{if(e.target===$('detail')){const r=$('detail').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)$('detail').close();}});
 document.addEventListener('click',e=>{const choice=e.target.closest('[data-language]');if(choice){lang=choice.dataset.language;try{localStorage.setItem('compendium-language',lang);}catch{}localize();$('languageMenu').open=false;$('languageMenu').querySelector('summary').focus();}else if(!e.target.closest('#languageMenu'))$('languageMenu').open=false;});document.addEventListener('keydown',e=>{if(e.key==='Escape')$('languageMenu').open=false;});
 localize();
-async function init(){try{const response=await fetch('data.json');if(!response.ok)throw Error('HTTP '+response.status);data=await response.json();maps=new Map(data.maps.map(m=>[m.id,m]));catalogs=Object.fromEntries(Object.entries(data.catalogs).map(([k,v])=>[k,new Map(v.map(x=>[x.id,x]))]));$('total').textContent=data.monsters.length;
+async function init(){try{const response=await fetch('data.json',{cache:'no-cache'});if(!response.ok)throw Error('HTTP '+response.status);data=await response.json();maps=new Map(data.maps.map(m=>[m.id,m]));catalogs=Object.fromEntries(Object.entries(data.catalogs).map(([k,v])=>[k,new Map(v.map(x=>[x.id,x]))]));$('total').textContent=data.monsters.length;
   for(const id of ['search','region','attack','weakness','drop','level','eligible','favoritesOnly'])$(id).addEventListener('input',updateFilters);
   $('sort').onchange=()=>{sortState[view]=$('sort').value;saveSort();render();};
   $('monstersTab').onclick=()=>setView('monsters');$('regionsTab').onclick=()=>setView('regions');$('reset').onclick=reset;

@@ -18,7 +18,7 @@
 <meta property="og:url" content="https://gd-fandev.github.io/gd-monster-index/">
 <meta property="og:locale" content="ko_KR">
 <meta property="og:locale:alternate" content="ja_JP">
-<meta property="og:image" content="https://gd-fandev.github.io/gd-monster-index/social-preview.png">
+<meta property="og:image" content="https://gd-fandev.github.io/gd-monster-index/social-preview.png?v=20261019-neutral">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:type" content="image/png">
@@ -26,9 +26,17 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="가디우스 몬스터 도감 / ガディウス モンスター図鑑">
 <meta name="twitter:description" content="몬스터·드롭·마법·사냥터 정보 / モンスター・ドロップ・魔法・狩場情報">
-<meta name="twitter:image" content="https://gd-fandev.github.io/gd-monster-index/social-preview.png">
-<link rel="stylesheet" href="style.css">
-<script type="module" src="app.js"></script>
+<meta name="twitter:image" content="https://gd-fandev.github.io/gd-monster-index/social-preview.png?v=20261019-neutral">
+<script>
+// Refresh runtime assets independently of persistent user preferences.
+const assetVersion=Date.now().toString(36);
+const stylesheet=document.createElement('link');
+stylesheet.rel='stylesheet';stylesheet.href=`style.css?v=${assetVersion}`;
+document.head.append(stylesheet);
+const application=document.createElement('script');
+application.type='module';application.src=`app.js?v=${assetVersion}`;
+document.addEventListener('DOMContentLoaded',()=>document.head.append(application),{once:true});
+</script>
 </head>
 <body>
 <header><h1 data-i18n="title">가디우스 이터널 워 몬스터 도감</h1><details id="languageMenu"><summary aria-label="언어 / 言語"><img id="languageFlag" src="flags/kr.svg" alt=""><span id="languageCode">KR</span><span class="languageArrow" aria-hidden="true"></span></summary><div class="languageOptions"><button type="button" data-language="ko" aria-label="한국어"><img src="flags/kr.svg" alt="">KR</button><button type="button" data-language="ja" aria-label="日本語"><img src="flags/jp.svg" alt="">JP</button></div></details></header>
