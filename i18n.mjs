@@ -1,5 +1,6 @@
 export const messages = {
   ko: {
+    favorites:'즐겨찾기', favoritesOnly:'즐겨찾기만', addFavorite:'즐겨찾기 추가', removeFavorite:'즐겨찾기 해제',
     description:'몬스터·드롭·마법·사냥터 정보',
     map:'지도', enlarge:'지도 크게 보기', noMap:'지도 미등록', zoomIn:'확대', zoomOut:'축소', fit:'화면에 맞춤',
     title:'가디우스 이터널 워 몬스터 도감', monsters:'몬스터 도감', regions:'사냥터 · 입장 레벨',
@@ -16,6 +17,7 @@ export const messages = {
     rights:'본 사이트는 비공식 자료이며, 모든 자료의 권리는 (주)플레인월드에 있습니다.'
   },
   ja: {
+    favorites:'お気に入り', favoritesOnly:'お気に入りのみ', addFavorite:'お気に入りに追加', removeFavorite:'お気に入りを解除',
     description:'モンスター・ドロップ・魔法・狩場情報',
     map:'地図', enlarge:'地図を大きく表示', noMap:'地図未登録', zoomIn:'拡大', zoomOut:'縮小', fit:'画面に合わせる',
     title:'ガディウス エターナルウォー モンスター図鑑', monsters:'モンスター図鑑', regions:'狩場・入場レベル',

@@ -6,6 +6,13 @@ const colors={ice:'#67c7ff',fire:'#ff8070',divine:'#f2c94c',neutral:'#f2f2f2',po
 let savedLanguage; try {savedLanguage=localStorage.getItem('compendium-language');} catch {}
 let lang=detectLanguage(savedLanguage,navigator.languages || [navigator.language]);
 let data, maps, catalogs, view='monsters', modalHistory=[], mapZoom=1;
+const favorites={monsters:new Set(),regions:new Set()};
+try{const saved=JSON.parse(localStorage.getItem('compendium-favorites'));for(const type of Object.keys(favorites)){if(Array.isArray(saved?.[type]))favorites[type]=new Set(saved[type].filter(id=>typeof id==='string'));}}catch{}
+function favoriteButton(type,record){const active=favorites[type].has(record.id);return `<button type="button" class="favoriteButton${active?' selected':''}" data-favorite="${type}" data-id="${esc(record.id)}" aria-pressed="${active}" aria-label="${esc(name(record)+' · '+t(active?'removeFavorite':'addFavorite'))}" title="${t(active?'removeFavorite':'addFavorite')}"><span class="favoriteIcon" aria-hidden="true">⭐</span></button>`;}
+function toggleFavorite(button){const type=button.dataset.favorite,id=button.dataset.id;const set=favorites[type];if(set.has(id))set.delete(id);else set.add(id);try{localStorage.setItem('compendium-favorites',JSON.stringify(Object.fromEntries(Object.entries(favorites).map(([key,value])=>[key,[...value]]))));}catch{}
+  document.querySelectorAll('[data-favorite]').forEach(el=>{if(el.dataset.favorite===type&&el.dataset.id===id){const record=type==='monsters'?data.monsters.find(m=>m.id===id):maps.get(id);const active=set.has(id);el.classList.toggle('selected',active);el.setAttribute('aria-pressed',String(active));el.setAttribute('aria-label',name(record)+' · '+t(active?'removeFavorite':'addFavorite'));el.title=t(active?'removeFavorite':'addFavorite');}});
+  if($('favoritesOnly').checked)render();
+}
 const sortState={monsters:'habitat',regions:'habitat'};
 try {
   const savedSort=JSON.parse(localStorage.getItem('compendium-sort'));
@@ -17,7 +24,7 @@ function saveSort(){try{localStorage.setItem('compendium-sort',JSON.stringify(so
 const savedFieldIds=['search','region','attack','weakness','drop','level'];
 function savePreferences(){
   const fields=Object.fromEntries(savedFieldIds.map(id=>[id,$(id).value]));
-  try{localStorage.setItem('compendium-filters',JSON.stringify({view,fields,eligible:$('eligible').checked}));}catch{}
+  try{localStorage.setItem('compendium-filters',JSON.stringify({view,fields,favoritesOnly:$('favoritesOnly').checked,eligible:$('eligible').checked}));}catch{}
 }
 function restorePreferences(){
   try{
@@ -32,6 +39,7 @@ function restorePreferences(){
       control.value=value;
     }
     $('eligible').checked=saved.eligible===true && level()!==null;
+    $('favoritesOnly').checked=saved.favoritesOnly===true;
     populateSort();
   }catch{}
 }
@@ -50,7 +58,7 @@ function range(m){return m.levelRange?.min!=null?`Lv ${m.levelRange.min}–${m.l
 function entry(m){return m.entry?`Lv ${m.entry.min}${m.entry.max==null?t('above'):'–'+m.entry.max}${m.entry.kind==='boarding'?' · '+t('boarding'):''}`:t('unknown');}
 function status(m){const a=admission(m,level());const key={eligible:'good',blocked:'bad',unknown:'unknown',unset:'unset'}[a];return `<span class="${key==='unset'?'unknown':key}">${t(key)}</span>`;}
 function pk(m){return m.isPKArea?'<span class="pill pk">PK</span>':'';}
-function card(m){const min=minimumHabitat(m,maps);return `<button class="card" data-monster="${esc(m.id)}" aria-label="${esc(name(m))}"><div class="portrait"><img src="${esc(m.image)}" alt="" loading="lazy" width="116" height="126"></div><div class="cardBody"><div class="cardTitle"><h3>${esc(name(m))}</h3><span class="minLevel">${t('habitat')} ${min==null?t('unrecorded'):'Lv '+min+'~'}</span></div>${row('attack',attrs(m.attackAttributeIds))}${row('weakness',attrs(m.weaknessAttributeIds))}${row('magic',magic(m))}${row('drops',names(m.dropItemIds,'items'))}<div class="habitatLine">${m.mapIds.length?esc(name(maps.get(m.mapIds[0])))+(m.mapIds.length>1?' '+t('others')+' '+(m.mapIds.length-1)+t('places'):''):t('unrecorded')} <span aria-hidden="true">↗</span></div></div></button>`;}
+function card(m){const min=minimumHabitat(m,maps);return `<div class="cardShell">${favoriteButton('monsters',m)}<button class="card" data-monster="${esc(m.id)}" aria-label="${esc(name(m))}"><div class="portrait"><img src="${esc(m.image)}" alt="" loading="lazy" width="116" height="126"></div><div class="cardBody"><div class="cardTitle"><h3>${esc(name(m))}</h3><span class="minLevel">${t('habitat')} ${min==null?t('unrecorded'):'Lv '+min+'~'}</span></div>${row('attack',attrs(m.attackAttributeIds))}${row('weakness',attrs(m.weaknessAttributeIds))}${row('magic',magic(m))}${row('drops',names(m.dropItemIds,'items'))}<div class="habitatLine">${m.mapIds.length?esc(name(maps.get(m.mapIds[0])))+(m.mapIds.length>1?' '+t('others')+' '+(m.mapIds.length-1)+t('places'):''):t('unrecorded')} <span aria-hidden="true">↗</span></div></div></button></div>`;}
 function empty(){return `<div class="empty"><strong>${t('empty')}</strong><button class="reset" data-reset>${t('resetFilters')}</button></div>`;}
 function populateSelect(id,options){const value=$(id).value;$(id).innerHTML=options;$(id).value=value;}
 function populateSort(){const options=[['name',t('nameSort')],...(view==='regions'?[['entry',t('entrySort')]]:[]),['habitat',t('habitatSort')]];$('sort').innerHTML=options.map(([v,l])=>option(v,l)).join('');$('sort').value=sortState[view];}
@@ -74,17 +82,17 @@ function render(){
   if(selected)$('regionSummary').innerHTML=`<button class="regionName" data-region="${esc(selected.id)}"><h2>${esc(name(selected))}${pk(selected)} ↗</h2></button><div>${t('entry')} <strong>${entry(selected)}</strong> <span class="pill">${t('habitatLevel')} ${range(selected)}</span> <span class="pill">${status(selected)}</span></div>`;
   $('results').className=view==='monsters'?'cards':'regions';
   if(view==='monsters'){
-    const list=selectMonsters(data,f).sort((a,b)=>(sortState.monsters==='habitat'?(minimumHabitat(a,maps)??Infinity)-(minimumHabitat(b,maps)??Infinity):0)||byName(a,b));
+    const list=selectMonsters(data,f).filter(m=>!$('favoritesOnly').checked||favorites.monsters.has(m.id)).sort((a,b)=>(sortState.monsters==='habitat'?(minimumHabitat(a,maps)??Infinity)-(minimumHabitat(b,maps)??Infinity):0)||byName(a,b));
     $('resultTitle').innerHTML=`${selected?esc(name(selected)):t('allMonsters')} <span id="count">${list.length}${t('count')}</span>`;
     $('results').innerHTML=list.length?list.map(card).join(''):empty();
   }else{
-    const list=data.maps.filter(m=>(m.levelRange||m.entry)&&(!f.search||normalize(Object.values(m.names).flat().join(' ')).includes(normalize(f.search)))&&(!f.eligible||admission(m,f.level)==='eligible')).sort((a,b)=>compareRegions(a,b,sortState.regions,lang));
+    const list=data.maps.filter(m=>(!$('favoritesOnly').checked||favorites.regions.has(m.id))&&(m.levelRange||m.entry)&&(!f.search||normalize(Object.values(m.names).flat().join(' ')).includes(normalize(f.search)))&&(!f.eligible||admission(m,f.level)==='eligible')).sort((a,b)=>compareRegions(a,b,sortState.regions,lang));
     $('resultTitle').innerHTML=`${t('regionTitle')} <span id="count">${list.length}${t('places')}</span>`;
-    $('results').innerHTML=list.length?`<table><thead><tr><th>${t('huntingGround')}</th><th>${t('entry')}</th><th>${t('habitatLevel')}</th><th>${t('myStatus')}</th></tr></thead><tbody>${list.map(m=>`<tr><td><button class="regionName" data-region="${esc(m.id)}">${esc(name(m))}${pk(m)}<small>${t('regionMonsters')} ${data.monsters.filter(x=>x.mapIds.includes(m.id)).length}${t('count')} ↗</small></button></td><td>${entry(m)}</td><td>${range(m)}</td><td>${status(m)}</td></tr>`).join('')}</tbody></table>`:empty();
+    $('results').innerHTML=list.length?`<table><thead><tr><th class="favoriteColumn"><span class="srOnly">${t('favorites')}</span></th><th>${t('huntingGround')}</th><th>${t('entry')}</th><th>${t('habitatLevel')}</th><th>${t('myStatus')}</th></tr></thead><tbody>${list.map(m=>`<tr><td class="favoriteColumn">${favoriteButton('regions',m)}</td><td><button class="regionName" data-region="${esc(m.id)}">${esc(name(m))}${pk(m)}<small>${t('regionMonsters')} ${data.monsters.filter(x=>x.mapIds.includes(m.id)).length}${t('count')} ↗</small></button></td><td>${entry(m)}</td><td>${range(m)}</td><td>${status(m)}</td></tr>`).join('')}</tbody></table>`:empty();
   }
 }
 function setView(next){view=next;['monsters','regions'].forEach(v=>{$(v+'Tab').classList.toggle('active',v===view);$(v+'Tab').setAttribute('aria-pressed',String(v===view));});$('search').value='';populateSort();updateFilters();}
-function reset(){for(const id of ['search','region','attack','weakness','drop','level'])$(id).value='';$('eligible').checked=false;sortState[view]='habitat';saveSort();populateSort();updateFilters();}
+function reset(){for(const id of ['search','region','attack','weakness','drop','level'])$(id).value='';$('eligible').checked=false;$('favoritesOnly').checked=false;sortState[view]='habitat';saveSort();populateSort();updateFilters();}
 function monsterDetail(m){
   const aliases=m.aliases?.[lang]||[];
   return `<div class="detailHead"><div class="portrait"><img src="${esc(m.image)}" alt="${esc(name(m))}"></div><div><h2 id="detailTitle" tabindex="-1">${esc(name(m))}</h2>${aliases.length?`<p>${t('aliases')} ${esc(aliases.join(' · '))}</p>`:''}</div></div><div class="detailSection">${row('attack',attrs(m.attackAttributeIds))}${row('weakness',attrs(m.weaknessAttributeIds))}${row('magic',magic(m))}${row('drops',names(m.dropItemIds,'items'))}</div><div class="detailSection"><h3>${t('habitats')} <span class="pill">${m.mapIds.length}${t('places')}</span></h3>${m.mapIds.map(id=>{const r=maps.get(id);return `<div class="habitat"><button data-region="${esc(id)}">${esc(name(r))}${pk(r)} ↗<small>${t('habitatLevel')} ${range(r)}</small></button><div>${t('entry')} <strong>${entry(r)}</strong><br>${status(r)}</div></div>`;}).join('')||`<p>${t('unrecorded')}</p>`}</div>${m.notes?.[lang]?`<div class="detailSection"><h3>${t('notes')}</h3><p>${esc(m.notes[lang])}</p></div>`:''}`;
@@ -100,10 +108,10 @@ $('detail').addEventListener('click',e=>{if(e.target===$('detail')){const r=$('d
 document.addEventListener('click',e=>{const choice=e.target.closest('[data-language]');if(choice){lang=choice.dataset.language;try{localStorage.setItem('compendium-language',lang);}catch{}localize();$('languageMenu').open=false;$('languageMenu').querySelector('summary').focus();}else if(!e.target.closest('#languageMenu'))$('languageMenu').open=false;});document.addEventListener('keydown',e=>{if(e.key==='Escape')$('languageMenu').open=false;});
 localize();
 async function init(){try{const response=await fetch('data.json');if(!response.ok)throw Error('HTTP '+response.status);data=await response.json();maps=new Map(data.maps.map(m=>[m.id,m]));catalogs=Object.fromEntries(Object.entries(data.catalogs).map(([k,v])=>[k,new Map(v.map(x=>[x.id,x]))]));$('total').textContent=data.monsters.length;
-  for(const id of ['search','region','attack','weakness','drop','level','eligible'])$(id).addEventListener('input',updateFilters);
+  for(const id of ['search','region','attack','weakness','drop','level','eligible','favoritesOnly'])$(id).addEventListener('input',updateFilters);
   $('sort').onchange=()=>{sortState[view]=$('sort').value;saveSort();render();};
   $('monstersTab').onclick=()=>setView('monsters');$('regionsTab').onclick=()=>setView('regions');$('reset').onclick=reset;
-  document.addEventListener('click',e=>{const m=e.target.closest('[data-monster]');if(m)openDetail('monster',m.dataset.monster);const r=e.target.closest('[data-region]');if(r)openDetail('region',r.dataset.region);const map=e.target.closest('[data-map]');if(map)openDetail('map',map.dataset.map);const zoom=e.target.closest('[data-zoom]');if(zoom&&$('largeMap')){mapZoom=zoom.dataset.zoom==='fit'?1:Math.max(1,Math.min(4,mapZoom+(zoom.dataset.zoom==='in'?.5:-.5)));$('largeMap').style.width=`${mapZoom*100}%`;$('zoomValue').textContent=`${mapZoom*100}%`;}if(e.target.closest('[data-reset]'))reset();});
+  document.addEventListener('click',e=>{const favorite=e.target.closest('[data-favorite]');if(favorite){toggleFavorite(favorite);return;}const m=e.target.closest('[data-monster]');if(m)openDetail('monster',m.dataset.monster);const r=e.target.closest('[data-region]');if(r)openDetail('region',r.dataset.region);const map=e.target.closest('[data-map]');if(map)openDetail('map',map.dataset.map);const zoom=e.target.closest('[data-zoom]');if(zoom&&$('largeMap')){mapZoom=zoom.dataset.zoom==='fit'?1:Math.max(1,Math.min(4,mapZoom+(zoom.dataset.zoom==='in'?.5:-.5)));$('largeMap').style.width=`${mapZoom*100}%`;$('zoomValue').textContent=`${mapZoom*100}%`;}if(e.target.closest('[data-reset]'))reset();});
   localize();restorePreferences();render();
  }catch(error){$('results').innerHTML=`<div class="empty"><strong>${t('loadError')}</strong><button class="reset" id="retry">${t('retry')}</button></div>`;$('retry').onclick=()=>location.reload();console.error(error);}}
 init();
